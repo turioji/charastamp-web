@@ -111,6 +111,7 @@ footer{text-align:center;color:var(--sub);font-size:12px;padding:20px}
         <div style="display:flex;gap:6px;align-items:center"><select id="bColor"></select><input type="color" id="bCustom" value="#7a3cff" hidden></div></div>
       <div class="ctl"><label>アイコン</label>
         <div class="chk" style="margin:0"><label><input type="radio" name="side" value="L" checked>左</label><label><input type="radio" name="side" value="R">右</label><label><input type="checkbox" id="bName" checked>名前を表示</label></div></div>
+      <div class="ctl"><label>キャラの大きさ</label><select id="bIcon"><option value="56">小</option><option value="72" selected>ふつう</option><option value="96">大</option><option value="120">特大</option></select></div>
       <div class="ctl"><label>表示名</label><input type="text" id="bDisp" placeholder="吹き出しに出す名前"></div>
       <div class="chk"><label><input type="checkbox" id="bSmart" checked>読みやすく自動整形</label><label><input type="checkbox" id="bPeriod" checked>。！？で改行</label></div>
       <div class="ctl"><label>幅</label><select id="bWidth"><option value="520">広い</option><option value="440">ふつう</option><option value="360" selected>せまい</option></select></div>
@@ -535,7 +536,7 @@ function wrapIdx(text, Wd, width, smart) {
 }
 
 function renderBubble(o) {
-  const S = 2, W = o.width, ICON = 72, M = 8, GAP = 16, pad = 14, fp = o.fontPx;
+  const S = 2, W = o.width, ICON = o.iconPx || 72, M = 8, GAP = 16, pad = 14, fp = o.fontPx;
   const STR = o.strength === undefined ? 1 : o.strength, wt = [400, 500, 600][STR];   // こさ：線の太さ・文字の太さ
   const mc = document.createElement('canvas').getContext('2d');
   let { text, st } = parseMarkup(o.text, !!o.bold, o.textColor || null);
@@ -567,7 +568,7 @@ function renderBubble(o) {
   c.lineWidth = o.edgeWidth || [1.5, 2.5, 3.5][STR]; c.lineJoin = 'round'; c.strokeStyle = edge; c.fillStyle = fill; c.beginPath();
   c.moveTo(bubX + rr, by); c.arcTo(bubX + bubW, by, bubX + bubW, by + bubH, rr); c.arcTo(bubX + bubW, by + bubH, bubX, by + bubH, rr);
   c.arcTo(bubX, by + bubH, bubX, by, rr); c.arcTo(bubX, by, bubX + bubW, by, rr); c.closePath(); c.fill(); if (!noEdge) c.stroke();
-  const ty = by + 18, pts = o.right
+  const ty = Math.min(Math.max(by + 18, top + ICON / 2), by + bubH - 18), pts = o.right
     ? [[bubX + bubW - 1, ty - 7], [bubX + bubW + 9, ty], [bubX + bubW - 1, ty + 7]]
     : [[bubX + 1, ty - 7], [bubX - 9, ty], [bubX + 1, ty + 7]];
   c.fillStyle = fill; c.beginPath(); c.moveTo(...pts[0]); c.lineTo(...pts[1]); c.lineTo(...pts[2]); c.closePath(); c.fill();
@@ -624,6 +625,7 @@ function txtColor() {
   Object.keys(NAMED).filter(k => k !== '黒' && k !== '白').forEach(k => { const o = document.createElement('option'); o.value = k; o.textContent = k; m.appendChild(o); });
   s.value = store.get('btxt', '自動'); if (!s.value) s.value = '自動'; $('#bBold').checked = store.get('bbold', false);
   $('#bStrong').value = String(store.get('bstrong', 1));
+  $('#bIcon').value = String(store.get('bicon', 72));
   const e = $('#bEdge'); ['自動', 'なし', ...Object.keys(NAMED), CUSTOM].forEach(k => { const o = document.createElement('option'); o.value = k; o.textContent = k; e.appendChild(o); });
   e.value = store.get('bedge', '自動'); if (!e.value) e.value = '自動'; $('#bEdgeW').value = String(store.get('bedgew', 0));
 })();
@@ -644,13 +646,14 @@ async function drawBubble() {
     smart: $('#bSmart').checked, period: $('#bPeriod').checked, width: +$('#bWidth').value, fontPx: +$('#bFont').value,
     color: cname === CUSTOM ? customColors($('#bCustom').value) : COLORS[cname],
     bold: $('#bBold').checked, textColor: txtColor(), strength: +$('#bStrong').value,
-    edge: edgeSel(), edgeWidth: +$('#bEdgeW').value || 0
+    edge: edgeSel(), edgeWidth: +$('#bEdgeW').value || 0, iconPx: +$('#bIcon').value
   };
   lastCv = renderBubble(o);
   const pv = $('#bpreview'); pv.width = lastCv.width; pv.height = lastCv.height;
   pv.getContext('2d').drawImage(lastCv, 0, 0); pv.style.width = (lastCv.width / 2) + 'px';
 }
-['#bChara', '#bColor', '#bCustom', '#bName', '#bSmart', '#bPeriod', '#bWidth', '#bFont', '#bText', '#bTxtColor', '#bTxtCustom', '#bBold', '#bStrong', '#bEdge', '#bEdgeCustom', '#bEdgeW'].forEach(s => $(s).addEventListener('input', () => {
+['#bChara', '#bColor', '#bCustom', '#bName', '#bSmart', '#bPeriod', '#bWidth', '#bFont', '#bText', '#bTxtColor', '#bTxtCustom', '#bBold', '#bStrong', '#bEdge', '#bEdgeCustom', '#bEdgeW', '#bIcon'].forEach(s => $(s).addEventListener('input', () => {
+  store.set('bicon', +$('#bIcon').value);
   store.set('bedge', $('#bEdge').value); store.set('bedgew', +$('#bEdgeW').value);
   store.set('bstrong', +$('#bStrong').value);
   store.set('btxt', $('#bTxtColor').value); store.set('bbold', $('#bBold').checked);
