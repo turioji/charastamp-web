@@ -17,6 +17,7 @@ noteやブログの「掛け合い形式」の記事づくりにぴったりで�
   - 吹き出しに出す「表示名」（「クロちゃん_01」→「クロちゃん」）
 - 縮小してもくっきり見える「くっきり補正」
 - バックアップの書き出し・読み込み（JSON）
+- 日本語／English の切り替え（右上のボタン。最初はブラウザの言語に合わせて自動で選びます）
 
 ## データについて
 
@@ -34,3 +35,17 @@ HTMLファイル1枚だけで動きます。インストールや登録は不要
 
 - 文節区切り：[BudouX](https://github.com/google/budoux)（Google / Apache License 2.0）の日本語モデルを同梱しています
 - 作者：釣りおじ（[@turioji](https://github.com/turioji)）／釣りおじ編集部
+
+---
+
+## English
+
+**Kyara Stamp Maker** turns your own character images into speech-bubble images for chat-style blog posts.
+Free, no sign-up, runs right in your browser — switch the language with the 🌐 button at the top right.
+
+👉 **Try it:** https://turioji.github.io/charastamp-web/
+
+- Add your characters with names, then click to copy and paste them anywhere (Ctrl+V)
+- Make speech bubbles: 16 colors + custom, left/right icons, text color & bold, border color & width
+- Automatic line breaks that keep words together
+- Your images are stored **only in your browser** (IndexedDB) — nothing is sent to a server. Please keep a backup (JSON export).
