@@ -278,7 +278,8 @@ const I18N_EN = {
   noClipImg: 'There is no image on the clipboard', clipReadFail: 'Couldn\'t read the clipboard. Please paste with Ctrl+V.',
   sampleName: 'Sample', bubblePh: 'Your line goes here', needChara: 'Please add a character first', needText: 'Please type a line',
   bCopied: 'Copied! Paste with Ctrl+V. Ready for your next line.', noExport: 'No characters to back up', exported: 'Exported {n}',
-  badFormat: 'wrong file format', imported: 'Imported {n}', importFail: 'Couldn\'t import: '
+  badFormat: 'wrong file format', imported: 'Imported {n}', importFail: 'Couldn\'t import: ',
+  importSkip: ' (skipped {n} that were not valid images)'
 };
 const JA = {
   title: 'きゃらスタンプメーカー（CharaStamp）',
@@ -290,7 +291,8 @@ const JA = {
   noClipImg: 'クリップボードに画像がありません', clipReadFail: 'クリップボードを読めませんでした。Ctrl+Vで貼り付けてください。',
   sampleName: 'サンプル', bubblePh: 'ここにセリフが入ります', needChara: '先にキャラを登録してください', needText: 'セリフを入力してください',
   bCopied: 'コピーしました。貼り付け先でCtrl+V。次のセリフもどうぞ。', noExport: '書き出すキャラがありません', exported: '{n}件 書き出しました',
-  badFormat: '形式が違います', imported: '{n}件 読み込みました', importFail: '読み込めませんでした：'
+  badFormat: '形式が違います', imported: '{n}件 読み込みました', importFail: '読み込めませんでした：',
+  importSkip: '（画像ではないデータ{n}件は飛ばしました）'
 };
 // 日本語の画面の文字は、HTMLに書いてあるものをそのまま覚えておく
 document.querySelectorAll('[data-i18n]').forEach(e => { if (!(e.dataset.i18n in JA)) JA[e.dataset.i18n] = e.textContent; });
@@ -787,10 +789,22 @@ $('#btnExport').addEventListener('click', async () => {
 $('#importIn').addEventListener('change', async e => {
   const f = e.target.files[0]; e.target.value = ''; if (!f) return;
   try {
-    const d = JSON.parse(await f.text()); if (d.app !== 'charastamp-web') throw new Error(t('badFormat'));
-    let n = 0;
-    for (const it of d.items) { const blob = await (await fetch(it.data)).blob(); await dbPut({ id: it.id, name: String(it.name), t: it.t || Date.now(), blob }); n++; }
-    await reload(); setStatus($('#hStatus'), t('imported', { n }));
+    if (f.size > 200 * 1024 * 1024) throw new Error(t('badFormat'));
+    const d = JSON.parse(await f.text());
+    if (!d || d.app !== 'charastamp-web' || !Array.isArray(d.items)) throw new Error(t('badFormat'));
+    let n = 0, skip = 0;
+    // 安全のため：PNG・JPEG・GIF・WebP・BMP の画像データ（data:image/…;base64,）だけを受け付ける
+    const OK = /^data:image\/(png|jpeg|jpg|gif|webp|bmp);base64,[A-Za-z0-9+/=\s]+$/i;
+    for (const it of d.items) {
+      try {
+        if (!it || typeof it.data !== 'string' || it.data.length > 30 * 1024 * 1024 || !OK.test(it.data)) { skip++; continue; }
+        const blob = await (await fetch(it.data)).blob();
+        (await createImageBitmap(blob)).close();      // 本当に画像として開けるか確かめる
+        const id = /^[A-Za-z0-9_-]{1,40}$/.test(String(it.id)) ? String(it.id) : uid();
+        await dbPut({ id, name: String(it.name || t('noName')).slice(0, 100), t: Number(it.t) || Date.now(), blob }); n++;
+      } catch (e) { skip++; }
+    }
+    await reload(); setStatus($('#hStatus'), t('imported', { n }) + (skip ? t('importSkip', { n: skip }) : ''), !n && skip > 0);
   } catch (err) { setStatus($('#hStatus'), t('importFail') + err.message, true); }
 });
 
