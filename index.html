@@ -600,7 +600,7 @@ const JA = {
 document.querySelectorAll('[data-i18n]').forEach(e => { if (!(e.dataset.i18n in JA)) JA[e.dataset.i18n] = e.textContent; });
 document.querySelectorAll('[data-i18n-html]').forEach(e => { if (!(e.dataset.i18nHtml in JA)) JA[e.dataset.i18nHtml] = e.innerHTML; });
 document.querySelectorAll('[data-i18n-ph]').forEach(e => { if (!(e.dataset.i18nPh in JA)) JA[e.dataset.i18nPh] = e.placeholder; });
-let LANG = store.get('lang', null) || ((navigator.language || '').toLowerCase().startsWith('ja') ? 'ja' : 'en');
+let LANG = store.get('lang', null) || 'ja';
 function t(k, v = {}) {
   const s = (LANG === 'en' && k in I18N_EN) ? I18N_EN[k] : (k in JA ? JA[k] : k);
   return s.replace(/\{(\w+)\}/g, (m, n) => (n in v ? v[n] : m));
