@@ -127,6 +127,33 @@ footer{text-align:center;color:var(--sub);font-size:12px;padding:20px}
 .pvBody{background:#e9e4da;max-height:74vh;overflow:auto;padding:16px;display:flex;justify-content:center}
 .pvFrame{background:#fff;padding:20px 16px;box-shadow:0 1px 6px rgba(0,0,0,.15);border-radius:6px}
 .pvFrame img{display:block;max-width:100%;height:auto;margin:0 auto}
+#tut{position:fixed;inset:0;z-index:10000}
+.tutBlock{position:absolute;inset:0}
+.tutHole{position:absolute;border-radius:12px;box-shadow:0 0 0 9999px rgba(30,24,16,.62);outline:3px solid #e8743b;transition:left .25s,top .25s,width .25s,height .25s;pointer-events:none}
+.tutCard{position:absolute;background:#fffaf0;color:#3a3226;border-radius:16px;box-shadow:0 12px 32px rgba(0,0,0,.35);padding:14px 14px 12px;display:flex;gap:12px;align-items:flex-start;transition:left .25s,top .25s;box-sizing:border-box}
+.tutCard.pop{animation:tutPop .28s ease-out}
+@keyframes tutPop{from{opacity:0;transform:translateY(8px) scale(.97)}to{opacity:1;transform:none}}
+.tutFace{width:86px;height:86px;object-fit:contain;flex-shrink:0;margin-top:4px}
+.tutBody{flex:1;min-width:0}
+.tutStep{font-size:12px;color:#a0937c;min-height:14px}
+.tutCard h3{margin:2px 0 6px;font-size:17px;color:#e8743b;padding-right:30px}
+.tutCard p{margin:0;font-size:14px;line-height:1.65}
+.tutBtns{display:flex;gap:6px;margin-top:12px;align-items:center}
+.tutBtns .b{padding:6px 12px}
+.tutBtns .pri{background:#e8743b;color:#fff;border-color:#e8743b}
+.tutSkip{border:none!important;background:none!important;color:#a0937c!important;padding-left:0!important}
+.tutVoice{position:absolute;top:8px;right:10px;border:1px solid #e3d6bd;background:#fff;border-radius:50%;width:32px;height:32px;font-size:16px;cursor:pointer;padding:0;line-height:30px}
+.tutVoice[hidden]{display:none}
+.tutVideo{display:block;margin-top:10px;padding:10px 12px;background:#fff1e6;border-radius:10px;font-size:13.5px}
+.tutVideo a{display:inline-block;margin-top:6px;padding:6px 12px;background:#e03a2f;color:#fff;border-radius:999px;text-decoration:none;font-weight:700}
+.tutVideo a:hover{filter:brightness(1.08)}
+.tutCard p b{color:#e8743b}
+.tutHide{display:flex;align-items:center;gap:4px;margin-top:10px;font-size:13px;color:#7b705c;cursor:pointer}
+.tutVoice.tap{width:auto;height:34px;padding:0 14px;border-radius:999px;background:#e8743b;border-color:#e8743b;color:#fff;font-size:14px;font-weight:700;line-height:32px;animation:tutTap 1s ease-in-out infinite}
+@keyframes tutTap{0%,100%{box-shadow:0 0 0 0 rgba(232,116,59,.85);transform:scale(1)}50%{box-shadow:0 0 0 12px rgba(232,116,59,0);transform:scale(1.08)}}
+.tutCard:has(.tutVoice.tap) h3{padding-right:120px}
+.tutCredit{text-align:center;font-size:12px;color:var(--sub);margin:-8px 0 18px}
+@media (max-width:560px){.tutFace{width:58px;height:58px}.tutCard h3{font-size:16px}.tutCard p{font-size:13.5px}}
 </style>
 </head>
 <body>
@@ -365,6 +392,7 @@ footer{text-align:center;color:var(--sub);font-size:12px;padding:20px}
 </section>
 </main>
 <footer data-i18n="footer">きゃらスタンプメーカー（CharaStamp） ／ 釣りおじ（turioji）作 ／ データはこのブラウザの中だけに保存されます</footer>
+<div class="tutCredit">音声ガイド：VOICEVOX:四国めたん</div>
 
 <dialog id="pvDlg">
   <div class="pvHead">
@@ -2207,6 +2235,139 @@ const seedBlob = o => { const bin = atob(o.d), u = new Uint8Array(bin.length); f
   } catch (e) {}
   await reload();
 })();
+/* ============ チュートリアル（はじめての人向けの案内） ============
+   ・初めて開いたときに1回だけ自動で始まる（「あとで」「スキップ」で閉じたら、次からは出ない）
+   ・右上の「❓ 使い方ツアー」ボタンで、いつでも最初から見られる
+   ・案内したい場所を明るく切り抜き、その横に案内役のキャラと説明を出す
+   ・← → キーで前後、Esc で閉じる */
+const TUT_VIDEO_URL = 'https://www.youtube.com/watch?v=3WtDBMRdSvQ';   // ← 使い方動画（YouTube）のURL
+const TUT_STEPS = [
+  { tab: 'list', sel: null, face: '女性スーツ_ようこそ',
+    ja: ['きゃらスタンプメーカーへようこそ！', 'キャラがしゃべる吹き出し画像を、ブラウザだけで作れるアプリです。<br>1分くらいで使い方を案内しますね。'],
+    en: ['Welcome to CharaStamp!', 'Make speech-bubble images with your own characters, right in your browser.<br>Let me show you around in about a minute.'] },
+  { tab: 'list', sel: '#p-list label.b.pri', face: '女性スーツ_説明',
+    ja: ['① 自分のキャラを登録', '「＋ キャラクター追加」で、自分のキャラ画像を登録します。<br>画像をこの画面にドラッグしても登録できます。'],
+    en: ['1. Add your characters', 'Use "+ Add character" to register your own character images.<br>You can also drag images onto this screen.'] },
+  { tab: 'list', sel: '#p-list .grpSw', face: '女性スーツ_ひらめき', tap: '#p-list .grpSw button[data-g=sample]',   // tap：ここだけ、明るい所を押して試せる
+    ja: ['キャラがいなくても大丈夫', '「サンプル」に切り替えると、スーツ姿のキャラ16体ですぐに試せます。<br><b>👆 「サンプル」を押してみてください。</b>'],
+    en: ['No characters yet? No problem', 'Switch to "Samples" to try it right away with 16 ready-made characters.<br><b>👆 Try pressing "Samples".</b>'],
+    after: { sel: '#grid', face: '女性スーツ_ガッツポーズ',
+      ja: ['サンプルに切り替わりました！', 'このキャラたちで、すぐに吹き出しを作れます。<br>「マイキャラ」を押すと、自分のキャラに戻ります。'],
+      en: ['Switched to Samples!', 'You can make bubbles with these characters right away.<br>Press "My characters" to go back to your own.'] } },
+  { tab: 'bubble', sel: '#bText', face: '女性スーツ_説明',
+    ja: ['② セリフを入れる', '「吹き出し」タブで、ここにセリフを入れるだけ。<br>右側にすぐ吹き出し画像ができます。'],
+    en: ['2. Type a line', 'In the "Speech bubble" tab, just type here.<br>The image appears on the right right away.'] },
+  { tab: 'bubble', sel: '#bShape', face: '女性スーツ_資料',
+    ja: ['形と色を選ぶ', '吹き出しの形は11種類。黒板・付箋・A型看板などもあります。<br>キャラの横の「表情変更」で、表情も変えられます。'],
+    en: ['Pick a shape and color', '11 shapes, including chalkboard, sticky note and sandwich board.<br>Use "Change face" next to the character to switch expressions.'] },
+  { tab: 'bubble', sel: '#p-bubble .actrow', face: '女性スーツ_ガッツポーズ',
+    ja: ['③ コピーして貼り付け', '「この吹き出しをコピー」を押して、noteやメールで Ctrl+V。<br>画像として保存したいときは「PNG保存」です。'],
+    en: ['3. Copy and paste', 'Press "Copy this bubble", then Ctrl+V in your blog or email.<br>Use "Save PNG" to keep it as a file.'] },
+  { tab: 'talk', sel: '#tText', face: '女性スーツ_説明',
+    ja: ['会話まとめ', '「名前：セリフ」と1行ずつ書くと、会話を1枚の画像にまとめます。'],
+    en: ['Conversation', 'Write one line per bubble as "Name: line" to turn a whole conversation into one image.'] },
+  { tab: 'photo', sel: '#p-photo label.b.pri', face: '女性スーツ_手をふる',
+    ja: ['写真に合成', '写真を選んで、その上に吹き出しを自由に置けます。'],
+    en: ['Add to photos', 'Pick a photo and place speech bubbles anywhere on it.'] },
+  { tab: 'help', sel: '#btnExport', face: '女性スーツ_考え中',
+    ja: ['大事なお知らせ', 'キャラや設定は、このブラウザの中にだけ保存されます。<br>ときどき「バックアップを書き出す」で保存しておくと安心です。'],
+    en: ['Important', 'Your characters and settings are saved only in this browser.<br>Use "Export backup" now and then to keep them safe.'] },
+  { tab: 'list', sel: '#tutBtn', face: '女性スーツ_ようこそ',
+    ja: ['これで準備OK！', 'この「❓ 使い方ツアー」ボタンで、いつでももう一度見られます。<br>楽しい吹き出しを作ってくださいね。<br><span class="tutVideo">詳しい動画解説もご覧になりたい方は、YouTubeへどうぞ。<br><a href="' + TUT_VIDEO_URL + '" target="_blank" rel="noopener">▶ YouTubeで使い方動画を見る</a></span>'],
+    en: ['You are all set!', 'Press this "❓ Tour" button any time to see this again.<br>Have fun making bubbles!<br><span class="tutVideo">Want a detailed video walkthrough? Watch it on YouTube (Japanese).<br><a href="' + TUT_VIDEO_URL + '" target="_blank" rel="noopener">▶ Watch the how-to video on YouTube</a></span>'] },
+];
+const TUT_UI = { ja: { next: '次へ', back: '戻る', skip: 'スキップ', start: 'ツアーをはじめる', later: '閉じる', hide: '次から表示しない', done: 'はじめる！', btn: '❓ 使い方ツアー' },
+                 en: { next: 'Next', back: 'Back', skip: 'Skip', start: 'Start the tour', later: 'Close', hide: "Don't show again", done: "Let's go!", btn: '❓ Tour' } };
+let tutI = -1, tutAfter = false;   // tutAfter：押して試すステップで、押したあとの説明を出している
+/* 音声ガイド（VOICEVOX:四国めたん）。voice フォルダの tut01.mp3〜tut10.mp3 を、画面ごとに流す。
+   ブラウザは、画面を押す前は音を出せない決まりなので、ボタンを押して進んだときから流す */
+const tutAudio = new Audio(); tutAudio.preload = 'auto';
+let tutVoiceOn = store.get('tutVoice', true), tutNeedTap = false;   // tutNeedTap：自動で開いた最初の画面は、🔊を押すと聞ける
+const tutVoiceSrc = i => `voice/tut${String(i + 1).padStart(2, '0')}.mp3`;
+function tutSpeak(i, gesture) {
+  tutAudio.pause(); tutNeedTap = false;
+  if (!tutVoiceOn || LANG === 'en') return;   // 音声は日本語だけ
+  tutAudio.src = tutVoiceSrc(i); tutAudio.currentTime = 0;
+  // 画面を押す前は、ブラウザが音を止めることがある。止められたら「押したら流す」状態にしておく
+  tutAudio.play().then(() => { tutNeedTap = false; tutVoiceBtn(); }).catch(e => { if (!gesture && e && e.name === 'NotAllowedError') { tutNeedTap = true; tutVoiceBtn(); } });
+  if (i + 1 < TUT_STEPS.length) { const pre = new Audio(); pre.preload = 'auto'; pre.src = tutVoiceSrc(i + 1); }   // 次の音声を先に読み込んでおく
+}
+function tutVoiceBtn() { const b = tutEl.querySelector('.tutVoice'); b.textContent = tutNeedTap ? (LANG === 'en' ? '🔊 Listen' : '🔊 声で聞く') : tutVoiceOn ? '🔊' : '🔇'; b.classList.toggle('tap', tutNeedTap); b.title = LANG === 'en' ? (tutVoiceOn ? 'Voice guide: on (Japanese)' : 'Voice guide: off') : (tutVoiceOn ? '音声ガイド：オン' : '音声ガイド：オフ'); b.hidden = LANG === 'en'; }
+const tutEl = document.createElement('div'); tutEl.id = 'tut'; tutEl.hidden = true;
+tutEl.innerHTML = '<div class="tutBlock"></div><div class="tutHole"></div><div class="tutCard" role="dialog" aria-modal="true"><button type="button" class="tutVoice"></button><img class="tutFace" alt=""><div class="tutBody"><div class="tutStep"></div><h3></h3><p></p><label class="tutHide"><input type="checkbox"> <span></span></label><div class="tutBtns"><button type="button" class="b tutSkip"></button><span style="flex:1"></span><button type="button" class="b tutBack"></button><button type="button" class="b pri tutNext"></button></div></div></div>';
+document.body.appendChild(tutEl);
+const tutFace = name => { const o = SEED_CHARAS.find(c => c.name === name); return o ? 'data:image/png;base64,' + o.d : ''; };
+function tutPlace() {   // 案内する場所を切り抜き、説明カードを近くの見やすい位置に置く
+  if (tutI < 0) return;
+  const s = tutAfter ? TUT_STEPS[tutI].after : TUT_STEPS[tutI], hole = tutEl.querySelector('.tutHole'), card = tutEl.querySelector('.tutCard');
+  const el = s.sel && document.querySelector(s.sel), vw = innerWidth, vh = innerHeight, pad = 8, cw = Math.min(420, vw - 24);
+  card.style.width = cw + 'px';
+  if (!el || !el.offsetParent) { hole.style.cssText = 'left:50%;top:50%;width:0;height:0'; card.style.left = (vw - cw) / 2 + 'px'; card.style.top = Math.max(12, (vh - card.offsetHeight) / 2) + 'px'; return; }
+  const r = el.getBoundingClientRect();
+  Object.assign(hole.style, { left: r.left - pad + 'px', top: r.top - pad + 'px', width: r.width + pad * 2 + 'px', height: r.height + pad * 2 + 'px' });
+  const ch = card.offsetHeight, below = r.bottom + pad + 14, above = r.top - pad - 14 - ch;
+  let top = below + ch <= vh - 8 ? below : above >= 8 ? above : Math.max(8, vh - ch - 8);
+  let left = Math.min(Math.max(12, r.left + r.width / 2 - cw / 2), vw - cw - 12);
+  card.style.left = left + 'px'; card.style.top = top + 'px';
+}
+function tutShow(i, gesture = true, after = false) {
+  tutI = i; tutAfter = after && !!TUT_STEPS[i].after; const s = tutAfter ? Object.assign({ tab: TUT_STEPS[i].tab }, TUT_STEPS[i].after) : TUT_STEPS[i], L = LANG === 'en' ? 'en' : 'ja', U = TUT_UI[L];
+  const nb = document.querySelector(`nav button[data-tab=${s.tab}]`); if (nb && !nb.classList.contains('on')) nb.click();
+  if (s.tab !== 'list' && !shown().length) { const sb = document.querySelector(`#p-${s.tab} .grpSw button[data-g=sample]`); if (sb) sb.click(); }   // マイキャラが空なら、サンプルに切り替えて見本が出るようにする
+  const card = tutEl.querySelector('.tutCard');
+  card.querySelector('.tutStep').textContent = i ? `${i} / ${TUT_STEPS.length - 1}` : '';
+  card.querySelector('h3').textContent = s[L][0]; card.querySelector('p').innerHTML = s[L][1];
+  const img = card.querySelector('.tutFace'); img.src = tutFace(s.face); img.hidden = !img.src;
+  const last = i === TUT_STEPS.length - 1;
+  card.querySelector('.tutSkip').textContent = i ? U.skip : U.later; card.querySelector('.tutSkip').style.display = last ? 'none' : '';
+  card.querySelector('.tutBack').textContent = U.back; card.querySelector('.tutBack').style.display = i === 0 ? 'none' : '';
+  card.querySelector('.tutNext').textContent = i === 0 ? U.start : last ? U.done : U.next;
+  const hd = card.querySelector('.tutHide'); hd.style.display = i === 0 ? '' : 'none'; hd.querySelector('span').textContent = U.hide; hd.querySelector('input').checked = !!store.get('tutHide', 0);
+  card.classList.remove('pop'); void card.offsetWidth; card.classList.add('pop');
+  const el = s.sel && document.querySelector(s.sel);
+  if (el) el.scrollIntoView({ block: 'center', behavior: 'instant' });
+  requestAnimationFrame(tutPlace); setTimeout(tutPlace, 120);   // タブ切り替えで位置が動くので、少し待ってもう一度合わせる
+  card.querySelector('.tutNext').focus({ preventScroll: true });
+  if (!tutAfter) tutSpeak(i, gesture); tutVoiceBtn();
+}
+function tutOpen(gesture = true) { tutEl.hidden = false; document.body.classList.add('tutOn'); tutShow(0, gesture); }
+function tutClose() { tutAudio.pause(); tutEl.hidden = true; document.body.classList.remove('tutOn'); tutI = -1; window.scrollTo(0, 0); }
+tutEl.querySelector('.tutNext').addEventListener('click', () => {
+  if (tutI === 0 && tutNeedTap) {   // 最初の画面で、まだ「ようこそ」の声が出ていなければ、この画面のまま声を流す
+    tutSpeak(0, true); tutVoiceBtn(); tutEl.querySelector('.tutNext').textContent = TUT_UI[LANG === 'en' ? 'en' : 'ja'].next; return;
+  }
+  tutI >= TUT_STEPS.length - 1 ? tutClose() : tutShow(tutI + 1);
+});
+tutEl.querySelector('.tutBack').addEventListener('click', () => tutI > 0 && tutShow(tutI - 1));
+tutEl.querySelector('.tutSkip').addEventListener('click', tutClose);
+tutEl.querySelector('.tutHide input').addEventListener('change', e => store.set('tutHide', e.target.checked ? 1 : 0));   // 「次から表示しない」：チェックした人だけ、開いたときの案内を出さない
+tutEl.querySelector('.tutVoice').addEventListener('click', () => {   // 🔊／🔇 の切り替え（次から覚えておく）
+  if (tutNeedTap) { tutSpeak(tutI, true); tutVoiceBtn(); return; }   // まだ音が出ていない最初の画面では、押したら再生
+  tutVoiceOn = !tutVoiceOn; store.set('tutVoice', tutVoiceOn);
+  if (tutVoiceOn) tutSpeak(tutI, true); else tutAudio.pause();
+  tutVoiceBtn();
+});
+tutEl.querySelector('.tutBlock').addEventListener('click', e => {   // 案内中は、後ろの画面を押せない（押して試すステップの、明るい所だけ押せる）
+  e.stopPropagation();
+  const st = TUT_STEPS[tutI]; if (!st || !st.tap || tutAfter) return;
+  const t = document.querySelector(st.tap), r = t && t.getBoundingClientRect();
+  if (r && e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom) { t.click(); setTimeout(() => tutShow(tutI, false, true), 150); }
+});
+addEventListener('resize', () => { if (tutI >= 0) tutPlace(); });
+addEventListener('scroll', () => { if (tutI >= 0) tutPlace(); }, true);
+document.addEventListener('keydown', e => {
+  if (tutI < 0) return;
+  if (e.key === 'Escape') { e.preventDefault(); tutClose(); }
+  else if (e.key === 'ArrowRight') { e.preventDefault(); tutEl.querySelector('.tutNext').click(); }
+  else if (e.key === 'ArrowLeft') { e.preventDefault(); tutEl.querySelector('.tutBack').click(); }
+}, true);
+const tutBtn = document.createElement('button'); tutBtn.className = 'b'; tutBtn.id = 'tutBtn'; tutBtn.type = 'button';
+tutBtn.style.cssText = 'margin-left:auto;padding:6px 12px';
+$('#langBtn').style.marginLeft = '8px'; $('#langBtn').before(tutBtn);
+const tutLabel = () => { tutBtn.textContent = TUT_UI[LANG === 'en' ? 'en' : 'ja'].btn; if (tutI >= 0) tutShow(tutI, false); };
+tutLabel(); $('#langBtn').addEventListener('click', tutLabel);
+tutBtn.addEventListener('click', () => tutOpen(true));
+if (!store.get('tutHide', 0)) setTimeout(() => tutOpen(false), 700);   // 開くたびに「ようこそ」を出す（いらない人は閉じる／次から表示しない）。最初の画面は、まだ音を出せないので🔊を押すと聞ける
 </script>
 </body>
 </html>
